@@ -107,6 +107,8 @@ class TodoList {
 	todo_count = 0;
 	/** @type {Todo[]} */
 	todos = [];
+	/** @type {'id' | 'alphabetical'} */
+	sort_order = 'id';
 
 	/** @param todo {Todo} */
 	#render_todo(todo) {
@@ -120,7 +122,9 @@ class TodoList {
 		const todo = new Todo(this.todo_count, title, (id) => this.#delete_todo(id));
 		this.todos.push(todo);
 
-		this.#render_todo(todo);
+		this.todos.sort(this.#get_todo_sort_fn());
+
+		this.#rerender_all_todos();
 	}
 
 	#delete_todo(id) {
@@ -136,6 +140,19 @@ class TodoList {
 		todo_list_node.remove_all_todos();
 
 		this.todos.forEach(this.#render_todo);
+	}
+
+	/**
+	 *
+	 * @returns {(todo1: Todo, todo2: Todo) => number}
+	 */
+	#get_todo_sort_fn() {
+		switch(this.sort_order) {
+			case 'id':
+				return (todo1, todo2) => todo1.id - todo2.id;
+			case 'alphabetical':
+				return (todo1, todo2) => todo1.title.localeCompare(todo2.title);
+		}
 	}
 }
 
