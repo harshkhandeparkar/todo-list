@@ -1,3 +1,13 @@
+const TODOS_KEY = 'todos';
+/**
+ * @param {{id: number, title: string}[]} todos
+ */
+const update_storage = (todos) => localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
+/**
+ * @returns {{id: number, title: string}[]}
+ */
+const get_storage = () => JSON.parse(localStorage.getItem(TODOS_KEY));
+
 class TodoListNode {
 	/** @type {HTMLUListElement} */
 	todo_list;
@@ -67,6 +77,17 @@ class Todo {
 		this.todo_node = this.#create_todo_node(this.title);
 	}
 
+	/**
+	 *
+	 * @returns {{id: number, title: string}}
+	 */
+	export_todo() {
+		return {
+			id: this.id,
+			title: this.title
+		}
+	}
+
 	/** @param title {string} */
 	#create_todo_node(title) {
 		const todo_li = document.createElement('li');
@@ -125,6 +146,21 @@ class TodoList {
 		this.todos.sort(this.#get_todo_sort_fn());
 
 		this.#rerender_all_todos();
+		this.#update_todos_storage();
+	}
+
+	export_todos() {
+		return this.todos.map((todo) => todo.export_todo());
+	}
+
+	/**
+	 *
+	 * @param {{id: number, title: string}[]} todos
+	 */
+	import_todos(todos) {
+		todos.forEach((todo) => this.add_todo(todo.title));
+
+		update_storage(this.export_todos());
 	}
 
 	#delete_todo(id) {
@@ -134,12 +170,17 @@ class TodoList {
 		)[0]
 
 		todo_list_node.remove_todo(todo_to_delete);
+		this.#update_todos_storage();
 	}
 
 	#rerender_all_todos() {
 		todo_list_node.remove_all_todos();
 
 		this.todos.forEach(this.#render_todo);
+	}
+
+	#update_todos_storage() {
+		update_storage(this.export_todos());
 	}
 
 	/**
@@ -173,5 +214,8 @@ form.addEventListener('submit', (e) => {
 })
 
 window.addEventListener('load', () => {
-	TODO_LIST.add_todo('Sample TODO');
+	const stored_todos = get_storage();
+
+	if (stored_todos !== null) TODO_LIST.import_todos(stored_todos);
+	else TODO_LIST.add_todo('Sample TODO');
 })
